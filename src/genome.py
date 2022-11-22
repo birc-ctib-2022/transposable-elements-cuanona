@@ -6,14 +6,14 @@ from abc import (
     # A tag that says that this method must be implemented by a child class
     abstractmethod
 )
-
+from collections import namedtuple
+Feature = namedtuple("Feature", ["feature", "start", "end"])
 
 class Genome(ABC):
     """Representation of a circular enome."""
 
     def __init__(self, n: int):
         """Create a genome of size n."""
-        pass
 
     @abstractmethod
     def insert_te(self, pos: int, length: int) -> int:
@@ -29,7 +29,6 @@ class Genome(ABC):
 
         Returns a new ID for the transposable element.
         """
-        pass
 
     @abstractmethod
     def copy_te(self, te: int, offset: int) -> int | None:
@@ -46,7 +45,6 @@ class Genome(ABC):
 
         If te is not active, return None (and do not copy it).
         """
-        pass
 
     @abstractmethod
     def disable_te(self, te: int) -> None:
@@ -57,17 +55,14 @@ class Genome(ABC):
         TEs are already inactive, so there is no need to do anything
         for those.
         """
-        pass
 
     @abstractmethod
     def active_tes(self) -> list[int]:
         """Get the active TE IDs."""
-        pass
 
     @abstractmethod
     def __len__(self) -> int:
         """Get the current length of the genome."""
-        pass
 
     @abstractmethod
     def __str__(self) -> str:
@@ -82,8 +77,8 @@ class Genome(ABC):
         represented with the character '-', active TEs with 'A', and disabled
         TEs with 'x'.
         """
-        pass
 
+Feature = namedtuple("Feature", ["feature", "length"])
 
 class ListGenome(Genome):
     """
@@ -92,9 +87,18 @@ class ListGenome(Genome):
     Implements the Genome interface using Python's built-in lists
     """
 
+    genome: list[Feature]
+    identifiers_active: list[int]
+    identifiers_inactive: list[int]
+
+    empty_te, active_te, disable_te = 0, 1, 2
+    
+
     def __init__(self, n: int):
         """Create a new genome with length n."""
-        ...  # FIXME
+        self.genome = [Feature(self.empty_te, n)]
+        self.identifiers_active = list()
+        self.identifiers_inactive = list()
 
     def insert_te(self, pos: int, length: int) -> int:
         """
@@ -109,8 +113,34 @@ class ListGenome(Genome):
 
         Returns a new ID for the transposable element.
         """
-        ...  # FIXME
-        return -1
+        acc = 0
+        for index, feature in enumerate(self.genome):
+            acc += feature.length
+            if acc > pos:
+                if feature.feature == self.active_te:
+                    feature.feature = self.disable_te
+                diff = acc - pos
+                self.genome[index] = Feature(
+                    self.active_te, length
+                    )
+                self.genome.insert(
+                    index,
+                    Feature(feature.feature, feature.length - diff)
+                    )
+                self.genome.insert(
+                    index + 2, 
+                    Feature(feature.feature, diff)
+                    )
+                return index +1
+       
+        # symbol = self.active_te if pos not in self.identifiers_active else self.disable_te
+        # self.genome[pos:pos + length] = length*[symbol]
+        # match symbol:
+        #     case self.active_te:
+        #         self.identifiers_active.append(pos)
+        #     case self.disable_te:
+        #         self.identifiers_active.remove(pos)
+        # return pos
 
     def copy_te(self, te: int, offset: int) -> int | None:
         """
@@ -160,7 +190,10 @@ class ListGenome(Genome):
         represented with the character '-', active TEs with 'A', and disabled
         TEs with 'x'.
         """
-        return "FIXME"
+        mapping = "-Ax"
+        return "".join(
+            el.length*mapping[el.feature] for el in self.genome
+            )
 
 
 class LinkedListGenome(Genome):
@@ -172,7 +205,7 @@ class LinkedListGenome(Genome):
 
     def __init__(self, n: int):
         """Create a new genome with length n."""
-        ...  # FIXME
+        
 
     def insert_te(self, pos: int, length: int) -> int:
         """
