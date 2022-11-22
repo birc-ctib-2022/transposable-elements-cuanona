@@ -91,7 +91,7 @@ class ListGenome(Genome):
     identifiers_active: list[int]
     identifiers_inactive: list[int]
 
-    empty_te, active_te, disable_te = 0, 1, 2
+    empty_te, active_te, inactive_te = 0, 1, 2
     
 
     def __init__(self, n: int):
@@ -118,7 +118,10 @@ class ListGenome(Genome):
             acc += feature.length
             if acc > pos:
                 if feature.feature == self.active_te:
-                    feature.feature = self.disable_te
+                    feature = Feature(
+                        self.inactive_te,
+                        feature.length
+                    )
                 diff = acc - pos
                 self.genome[index] = Feature(
                     self.active_te, length
@@ -131,16 +134,12 @@ class ListGenome(Genome):
                     index + 2, 
                     Feature(feature.feature, diff)
                     )
-                return index +1
-       
-        # symbol = self.active_te if pos not in self.identifiers_active else self.disable_te
-        # self.genome[pos:pos + length] = length*[symbol]
-        # match symbol:
-        #     case self.active_te:
-        #         self.identifiers_active.append(pos)
-        #     case self.disable_te:
-        #         self.identifiers_active.remove(pos)
-        # return pos
+                break
+        
+        self.identifiers_active = [
+            i for i, feat in enumerate(self.genome) if feat.feature == self.active_te
+            ]    
+        return index + 1
 
     def copy_te(self, te: int, offset: int) -> int | None:
         """
@@ -170,8 +169,7 @@ class ListGenome(Genome):
 
     def active_tes(self) -> list[int]:
         """Get the active TE IDs."""
-        ...  # FIXME
-        return []
+        return self.identifiers_active
 
     def __len__(self) -> int:
         """Current length of the genome."""
