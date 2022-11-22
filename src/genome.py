@@ -78,7 +78,7 @@ class Genome(ABC):
         TEs with 'x'.
         """
 
-Feature = namedtuple("Feature", ["feature", "length"])
+Feature = namedtuple("Feature", ["feature", "start", "end"])
 
 class ListGenome(Genome):
     """
@@ -88,16 +88,16 @@ class ListGenome(Genome):
     """
 
     genome: list[Feature]
-    identifiers_active: list[int]
-    identifiers_inactive: list[int]
+    identifiers_active: dict[int, int]
 
     empty_te, active_te, inactive_te = 0, 1, 2
     
 
     def __init__(self, n: int):
         """Create a new genome with length n."""
-        self.genome = [Feature(self.empty_te, n)]
-        self.identifiers_active = list()
+        self.genome = [Feature(self.empty_te, 0, n)]
+        self.identifiers_active = {}
+        self.counter_te = 0
         self.identifiers_inactive = list()
 
     def insert_te(self, pos: int, length: int) -> int:
@@ -113,34 +113,42 @@ class ListGenome(Genome):
 
         Returns a new ID for the transposable element.
         """
-        acc = 0
-        for index, feature in enumerate(self.genome):
-            acc += feature.length
-            if acc > pos:
-                if feature.feature == self.active_te:
-                    feature = Feature(
+        new_te = Feature(self.active_te, pos, pos + length)
+        for index, old_te in enumerate(self.genome):
+            if old_te.end > pos:
+                diff = old_te.end - pos
+                return self.split_and_insert(new_te, old_te, index, diff)
+                
+    def split_and_insert(self, new_te, old_te, index, diff):
+        """Split and insert a new te"""
+        if old_te.feature == self.active_te:
+            old_te = Feature(
                         self.inactive_te,
-                        feature.length
+                        old_te.start,
+                        old_te.end
                     )
-                diff = acc - pos
-                self.genome[index] = Feature(
-                    self.active_te, length
-                    )
-                self.genome.insert(
+        self.genome[index] = new_te
+        self.genome.insert(
                     index,
-                    Feature(feature.feature, feature.length - diff)
+                    Feature(old_te.feature, old_te.start, old_te.end - diff)
                     )
-                self.genome.insert(
-                    index + 2, 
-                    Feature(feature.feature, diff)
+        self.genome.insert(
+                    index + 2,
+                    Feature(old_te.feature, new_te.end, new_te.end + diff)
                     )
-                break
+        self.counter_te += 1
+        new_identifiers = {}
+        for identifier, dict_pos in self.identifiers_active.items():
+            match dict_pos:
+                case dict_pos  if dict_pos < index:
+                    new_identifiers[identifier] = dict_pos
+                case dict_pos if dict_pos > index:
+                     new_identifiers[identifier] = dict_pos + 2
+        new_identifiers[self.counter_te] = index + 1
+        self.identifiers_active = new_identifiers
+        return self.counter_te
         
-        self.identifiers_active = [
-            i for i, feat in enumerate(self.genome) if feat.feature == self.active_te
-            ]    
-        return index + 1
-
+    
     def copy_te(self, te: int, offset: int) -> int | None:
         """
         Copy a transposable element.
@@ -155,7 +163,12 @@ class ListGenome(Genome):
 
         If te is not active, return None (and do not copy it).
         """
-        ...  # FIXME
+        original_index = self.identifiers_active[te]
+        original = self.genome[original_index]
+        original_position = original.start
+        new_position = original_position + offset
+        return self.insert_te(new_position, original.end - original.start)
+        
 
     def disable_te(self, te: int) -> None:
         """
@@ -169,7 +182,7 @@ class ListGenome(Genome):
 
     def active_tes(self) -> list[int]:
         """Get the active TE IDs."""
-        return self.identifiers_active
+        return list(self.identifiers_active.keys())
 
     def __len__(self) -> int:
         """Current length of the genome."""
@@ -190,7 +203,7 @@ class ListGenome(Genome):
         """
         mapping = "-Ax"
         return "".join(
-            el.length*mapping[el.feature] for el in self.genome
+            (el.end - el.start)*mapping[el.feature] for el in self.genome
             )
 
 
