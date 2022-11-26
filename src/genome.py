@@ -113,42 +113,54 @@ class ListGenome(Genome):
 
         Returns a new ID for the transposable element.
         """
-        new_te = Feature(self.active_te, pos, pos + length)
-        for index, old_te in enumerate(self.genome):
-            if old_te.end > pos:
-                diff = old_te.end - pos
-                return self.split_and_insert(new_te, old_te, index, diff)
-                
-    def split_and_insert(self, new_te, old_te, index, diff):
-        """Split and insert a new te"""
-        if old_te.feature == self.active_te:
-            old_te = Feature(
-                        self.inactive_te,
-                        old_te.start,
-                        old_te.end
-                    )
-        self.genome[index] = new_te
+        index = self.find_where_to_insert(pos)
+        if self.genome[index].feature == self.active_te:
+            self.genome[index] = Feature(
+                self.inactive_te,
+                self.genome[index].start,
+                self.genome[index].end
+                )
+            self.identifiers_active.pop(index)
+        self.insert_into(self.active_te, index, pos, pos + length)
+        new_index = index +1
+        self.counter_te += 1
+        self.identifiers_active[self.counter_te] = new_index
+        for k,v in self.identifiers_active.items():
+            if v > pos:
+                self.identifiers_active[k] += 3
+        return self.counter_te
+    def find_where_to_insert(self, start: int):
+        for index, stack in enumerate(self.genome):
+            if stack.start <= start <= stack.end:
+                return index
+    def insert_into(self, new_feature: str, index: int, start: int, end: int):
+        old: Feature = self.genome[index]
+        split_size = old.end - start
+        if split_size < 0:
+            raise IndexError
+        self.genome[index] = Feature(new_feature, start, end)
         self.genome.insert(
                     index,
-                    Feature(old_te.feature, old_te.start, old_te.end - diff)
+                    Feature(old.feature, old.start, start)
                     )
-        self.genome.insert(
+        if index + 2 > len(self.genome):
+            self.genome.append(Feature(old.feature, end, end + split_size))
+        else:
+            self.genome.insert(
                     index + 2,
-                    Feature(old_te.feature, new_te.end, new_te.end + diff)
+                    Feature(old.feature, end, end + split_size)
                     )
-        self.counter_te += 1
-        new_identifiers = {}
-        for identifier, dict_pos in self.identifiers_active.items():
-            match dict_pos:
-                case dict_pos  if dict_pos < index:
-                    new_identifiers[identifier] = dict_pos
-                case dict_pos if dict_pos > index:
-                     new_identifiers[identifier] = dict_pos + 2
-        new_identifiers[self.counter_te] = index + 1
-        self.identifiers_active = new_identifiers
-        return self.counter_te
-        
-    
+        self.update_genome_by_add_diff(end - start, index+3)
+
+    def update_genome_by_add_diff(self, length, index):
+
+        for i in range(index, len(self.genome)):
+            old:Feature = self.genome[i]
+            self.genome[i] = Feature(
+                old.feature,
+                old.start + length,
+                old.end + length
+                )    
     def copy_te(self, te: int, offset: int) -> int | None:
         """
         Copy a transposable element.
@@ -163,13 +175,16 @@ class ListGenome(Genome):
 
         If te is not active, return None (and do not copy it).
         """
-        original_index = self.identifiers_active[te]
-        original = self.genome[original_index]
-        original_position = original.start
-        new_position = original_position + offset
+        original_index = self.identifiers_active.get(te)
+        if original_index is None:
+            return None
+        original = self.genome[original_index]     
+        new_position = original.start + offset
+        if new_position < 0:
+            new_position = self.genome[-1].end + new_position
+        if new_position > self.genome[-1].end:
+            new_position = new_position - self.genome[-1].end
         return self.insert_te(new_position, original.end - original.start)
-        
-
     def disable_te(self, te: int) -> None:
         """
         Disable a TE.
