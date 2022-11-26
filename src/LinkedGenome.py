@@ -1,21 +1,18 @@
-"""A circular genome for simulating transposable elements."""
 
-from abc import (
-    # A tag that says that we can't use this class except by specialising it
-    ABC,
-    # A tag that says that this method must be implemented by a child class
-    abstractmethod
-)
-from collections import namedtuple
-Feature = namedtuple("Feature", ["feature", "start", "end"])
+from genome import Genome
 
-class Genome(ABC):
-    """Representation of a circular enome."""
+
+class LinkedListGenome(Genome):
+    """
+    Representation of a genome.
+
+    Implements the Genome interface using linked lists.
+    """
 
     def __init__(self, n: int):
-        """Create a genome of size n."""
+        """Create a new genome with length n."""
+        
 
-    @abstractmethod
     def insert_te(self, pos: int, length: int) -> int:
         """
         Insert a new transposable element.
@@ -29,8 +26,9 @@ class Genome(ABC):
 
         Returns a new ID for the transposable element.
         """
+        ...  # FIXME
+        return -1
 
-    @abstractmethod
     def copy_te(self, te: int, offset: int) -> int | None:
         """
         Copy a transposable element.
@@ -45,8 +43,8 @@ class Genome(ABC):
 
         If te is not active, return None (and do not copy it).
         """
+        ...  # FIXME
 
-    @abstractmethod
     def disable_te(self, te: int) -> None:
         """
         Disable a TE.
@@ -55,16 +53,18 @@ class Genome(ABC):
         TEs are already inactive, so there is no need to do anything
         for those.
         """
+        ...  # FIXME
 
-    @abstractmethod
     def active_tes(self) -> list[int]:
         """Get the active TE IDs."""
+        # FIXME
+        return []
 
-    @abstractmethod
     def __len__(self) -> int:
-        """Get the current length of the genome."""
+        """Current length of the genome."""
+        # FIXME
+        return 0
 
-    @abstractmethod
     def __str__(self) -> str:
         """
         Return a string representation of the genome.
@@ -77,5 +77,4 @@ class Genome(ABC):
         represented with the character '-', active TEs with 'A', and disabled
         TEs with 'x'.
         """
-
-
+        return "FIXME"

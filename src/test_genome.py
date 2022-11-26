@@ -5,12 +5,9 @@
 # all files that start with test_*.py and run all functions with
 # names that start with test_
 
-from genome import (
-    Feature,
-    Genome,
-    ListGenome,
-    LinkedListGenome
-)
+from LinkedGenome import LinkedListGenome
+from ListGenome import ListGenome
+from genome import Genome
 from typing import Type
 
 
