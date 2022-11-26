@@ -120,7 +120,9 @@ class ListGenome(Genome):
                 self.genome[index].start,
                 self.genome[index].end
                 )
-            self.identifiers_active.pop(index)
+            self.identifiers_active = {
+                key:val for key, val in self.identifiers_active.items() if val != index
+                }
         self.insert_into(self.active_te, index, pos, pos + length)
         new_index = index +1
         self.counter_te += 1
@@ -193,7 +195,15 @@ class ListGenome(Genome):
         TEs are already inactive, so there is no need to do anything
         for those.
         """
-        ...  # FIXME
+        original_index = self.identifiers_active.get(te)
+        if original_index:
+            self.identifiers_active.pop(te)
+            original = self.genome[original_index]  
+            self.genome[original_index] = Feature(
+                self.inactive_te,
+                original.start,
+                original.end
+            )
 
     def active_tes(self) -> list[int]:
         """Get the active TE IDs."""
@@ -201,8 +211,7 @@ class ListGenome(Genome):
 
     def __len__(self) -> int:
         """Current length of the genome."""
-        ...  # FIXME
-        return 0
+        return self.genome[-1].end
 
     def __str__(self) -> str:
         """
