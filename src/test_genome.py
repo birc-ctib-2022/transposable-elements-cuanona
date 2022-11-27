@@ -10,6 +10,7 @@ from ListGenome import ListGenome
 from genome import Genome
 from typing import Type
 
+from simulate import sim_te, SimParams
 
 def run_genome_test(genome_class: Type[Genome]) -> None:
     """Test a Genome implementation."""

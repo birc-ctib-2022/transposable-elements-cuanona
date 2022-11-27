@@ -38,12 +38,13 @@ class ListGenome(Genome):
         Returns a new ID for the transposable element.
         """
         index = self.find_where_to_insert(pos)
-        self.disable_if_active(index)
-        self.insert_into(self.active_te, index, pos, pos + length)
-        self.update_te_counter()
-        self.identifiers_active[self.counter_te] = index +1
-        self.update_identifiers_from(pos)
-        return self.counter_te
+        if index is not None:
+            self.disable_if_active(index)
+            self.insert_into(self.active_te, index, pos, pos + length)
+            self.update_te_counter()
+            self.identifiers_active[self.counter_te] = index +1
+            self.update_identifiers_from(pos)
+            return self.counter_te
 
     def update_te_counter(self):
         self.counter_te += 1
@@ -63,23 +64,24 @@ class ListGenome(Genome):
             if stack.start <= start <= stack.end:
                 return index
     def insert_into(self, new_feature: str, index: int, start: int, end: int):
-        old: Feature = self.genome[index]
-        split_size = old.end - start
-        if split_size < 0:
-            raise IndexError
-        self.genome[index] = Feature(new_feature, start, end)
-        self.genome.insert(
-                    index,
-                    Feature(old.feature, old.start, start)
-                    )
-        if index + 2 > len(self.genome):
-            self.genome.append(Feature(old.feature, end, end + split_size))
-        else:
+        if index is not None: 
+            old: Feature = self.genome[index]
+            split_size = old.end - start
+            if split_size < 0:
+                raise IndexError
+            self.genome[index] = Feature(new_feature, start, end)
             self.genome.insert(
-                    index + 2,
-                    Feature(old.feature, end, end + split_size)
-                    )
-        self.update_genome_by_add_diff(end - start, index+3)
+                        index,
+                        Feature(old.feature, old.start, start)
+                        )
+            if index + 2 > len(self.genome):
+                self.genome.append(Feature(old.feature, end, end + split_size))
+            else:
+                self.genome.insert(
+                        index + 2,
+                        Feature(old.feature, end, end + split_size)
+                        )
+            self.update_genome_by_add_diff(end - start, index+3)
 
     def update_genome_by_add_diff(self, length, index):
 

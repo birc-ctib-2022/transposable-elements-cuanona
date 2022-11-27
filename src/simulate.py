@@ -5,11 +5,9 @@ import random as rand
 import numpy as np
 from enum import Enum
 from typing import Type
-from genome import (
-    Genome,
-    ListGenome,
-    LinkedListGenome
-)
+from LinkedGenome import LinkedListGenome
+from ListGenome import ListGenome
+from genome import Genome
 from dataclasses import dataclass
 
 

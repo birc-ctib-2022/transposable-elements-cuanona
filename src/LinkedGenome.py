@@ -151,9 +151,6 @@ class LinkedListGenome(Genome):
                     feature.val.length + offset
                     )
         return self.counter_te
-            
-
-
 
     def disable_te(self, te: int) -> None:
         """
