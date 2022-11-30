@@ -44,7 +44,7 @@ class ListGenome(Genome):
                 self.active_identifiers[identifier] = Interval(
                     active_te.start + length, active_te.end + length
                 )
-        self.genome = self.genome[:pos] + length*['A'] + self.genome[pos:]
+        self.genome[pos:pos] = length*['A']
         self.te_counter += 1
         self.active_identifiers[self.te_counter] = Interval(pos, pos + length)
         return self.te_counter
