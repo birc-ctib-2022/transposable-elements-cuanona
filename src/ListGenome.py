@@ -5,15 +5,15 @@ from genome import Genome
 
 """A circular genome for simulating transposable elements."""
 
-Range = namedtuple("Range", ["start", "end"])
+Interval = namedtuple("Interval", ["start", "end"])
 
-def is_in_range(pos: int, range: Range):
-    return range.start <= pos < range.end
+def is_in_range(pos: int, interval: Interval):
+    return interval.start <= pos < interval.end
 
 class ListGenome(Genome):
     """Representation of a circular enome."""
     genome: list[str]
-    active_identifiers: dict[int:Range]
+    active_identifiers: dict[int:Interval]
     def __init__(self, n: int):
         """Create a genome of size n."""
         self.genome = n*['-']
@@ -40,14 +40,13 @@ class ListGenome(Genome):
                 start, end = active_te
                 self.genome[start:end] = (end - start)*["x"]
                 self.active_identifiers.pop(identifier)
-                pass
             if active_te.start > pos:
-                self.active_identifiers[identifier] = Range(
+                self.active_identifiers[identifier] = Interval(
                     active_te.start + length, active_te.end + length
                 )
         self.genome = self.genome[:pos] + length*['A'] + self.genome[pos:]
         self.te_counter += 1
-        self.active_identifiers[self.te_counter] = Range(pos, pos + length)
+        self.active_identifiers[self.te_counter] = Interval(pos, pos + length)
         return self.te_counter
 
     def copy_te(self, te: int, offset: int) -> int | None:
@@ -64,7 +63,7 @@ class ListGenome(Genome):
 
         If te is not active, return None (and do not copy it).
         """
-        original: Range = self.active_identifiers.get(te)
+        original: Interval = self.active_identifiers.get(te)
         if original:
             pos = (original.start + offset)
             length = original.end - original.start
@@ -78,7 +77,7 @@ class ListGenome(Genome):
         TEs are already inactive, so there is no need to do anything
         for those.
         """
-        original: Range = self.active_identifiers.pop(te)
+        original: Interval = self.active_identifiers.pop(te)
         if original:
             self.genome[original.start:original.end] = (original.end - original.start)*["x"]
 
