@@ -61,15 +61,13 @@ class LinkedListGenome(Genome):
         while feature is not self.head:
             yield feature.val
             feature = feature.next
-    def into_iter(self):
+    def into_iter_with_pos(self):
         feature = self.head.next
         acc = 0
         while feature is not self.head:
             acc += feature.val.length 
             yield (feature, acc)
             feature = feature.next
-
-        
 
     def insert_te(self, pos: int, length: int) -> int:
         """
@@ -85,27 +83,27 @@ class LinkedListGenome(Genome):
         Returns a new ID for the transposable element.
         """
 
-        for feature, end in self.into_iter():
+        for feature, end in self.into_iter_with_pos():
             if end > pos:
                 self.insert_into(length, feature, feature.val.length -end + pos, end - pos)
                 return self.counter_te
         return -1
 
     def insert_into(self, length, feature, split_size_1, split_size_2):
-        self.disable_if_active(feature)
+        if  feature.val.feature == self.active_te:
+            self.disable_feature(feature)
         feature.val = Feature(feature.val.feature, split_size_1)
         insert_after(feature, Feature(self.active_te, length))
         insert_after(feature.next, Feature(feature.val.feature, split_size_2))
         self.counter_te += 1
         self.active_identifier[self.counter_te] = feature.next
 
-    def disable_if_active(self, feature):
-        if  feature.val.feature == self.active_te:
-            feature.val = Feature(self.inactive_te, feature.val.length)
-            for identifier, disable in self.active_identifier.items():
-                if disable is feature:
-                    self.active_identifier.pop(identifier)
-                    break
+    def disable_feature(self, feature):
+        feature.val = Feature(self.inactive_te, feature.val.length)
+        for identifier, disable in self.active_identifier.items():
+            if disable is feature:
+                self.active_identifier.pop(identifier)
+                break
 
     def copy_te(self, te: int, offset: int) -> int | None:
         """
@@ -171,7 +169,7 @@ class LinkedListGenome(Genome):
     def __len__(self) -> int:
         """Current length of the genome."""
         end = 0
-        for _, end in self.into_iter():
+        for _, end in self.into_iter_with_pos():
             pass
         return end
 
