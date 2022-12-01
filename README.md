@@ -282,6 +282,29 @@ def __str__(self) -> str:
 
 This operation is $O(n)$ because we are appending all the nucleotides. 
 
-
+## Benchmarking
 
 In `src/simulate.py` you will find a program that can run simulations and tell you the actual time it takes to simulate with different implementations. You can use it to test your analysis. You can modify the parameters of the simulator if you want to explore how they affect the running time.
+
+With the default parameters, the benchmarking results are:
+
+```
+Python lists: 0.14887452000402845
+Linked lists: 0.014795610004512127
+```
+Linked list are consintently 10 times faster than python list. This is because $k \ll n$ and, therefore, is much more efficent using blocks than nucleotides as the basic element. 
+
+If we modify the average length of transposable elements to one, (which should affect negatively to the linked list) we still get similar results. 
+
+```
+Python lists: 0.13632362199859926
+Linked lists: 0.018157370999688283
+```
+If we increase the average offset (so linked list have to iterate over more elements until finding the rigth block) we get similar results. 
+
+If we increase the chances of inserting a new transposable element, the most expensive operation for list implementation, we can see how the computing time also increases. For weigths = (1, 0.1, 0):
+
+```
+Python lists: 0.44068761599919526
+Linked lists: 0.019095709001703653
+```
