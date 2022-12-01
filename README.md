@@ -100,6 +100,68 @@ You are free to implement the genome classes however you want, and using whateer
 
 When you have implemented the two (or more) classes, describe the complexity of each operation as a function of the genome size (at the time of the operation), and the size of the TE involved (and when copying, the offset you are copying). Put the description here:
 
-**FIXME: OPERATION COMPLEXITY**
+## List implementation
+
+First, let start with the List implementation. 
+
+### Copy a transposable element
+
+
+```python
+def copy_te(self, te: int, offset: int) -> int | None:
+    original: Interval = self.active_identifiers.get(te) # O(1)
+    if original: O(1)
+        pos = (original.start + offset) # O(1)
+        length = original.end - original.start # O(1)
+        return self.insert_te(pos, length) # inserting transposable element
+```
+
+As we are using a dict (hash table) for storing the extact position of each active transposon, this operation is, after calculating the new position which can be done in $O(1)$, just inserting a transposable element. Then, in the worst case its complexity is the same as inserting an element and in best case is $O(1)$. 
+
+### Disable a transposable element
+
+```python
+def disable_te(self, te: int) -> None:
+    original: Interval = self.active_identifiers.pop(te) # O(1)
+    if original: O(1)
+        self.genome[original.start:original.end] = (original.end - original.start)*["x"] # O(n+m)
+```
+
+Again, we can find the rigth indexes in $O(1)$. For disabling the te, we have to set an slice which, as [TimeComplexity Wiki](https://wiki.python.org/moin/TimeComplexity) says, its amortized worst case is $O(n, m)$, where n is the length of the genome and m the length of the te that we want to disable. 
+
+## Linked list implementation with stacks
+
+### Copy a transposable element
+
+
+```python
+# This is simplified code
+def copy_te(self, te: int, offset: int) -> int | None:
+    original = feature= self.active_identifier[te] # O(1)
+    if original.val.feature != self.active_te: #O(1)
+        return None
+    # Calculate offset -> O(1)
+    # Iterate over the linked list until find node where to insert O(k) worst case
+    while offset > 0:
+        feature = getattr(feature, direction)
+        if feature is self.head:
+            feature = getattr(feature, direction)
+            offset -= feature.val.length
+    # Insert te
+    return self.counter_te
+```
+
+For this implementation, we have to find the node to insert our new transposable elements and that has a complexity of $O(k)$. In the worst case, where all elements in our linked list has length one, that would be $O(n)$. After finding the node, we have to insert it. 
+
+### Disable a transposable element
+
+```python
+def disable_te(self, te: int) -> None:
+    feature = self.active_identifier.pop(te) # O(1)
+    if feature is not None: O(1)
+        feature.val = Feature(self.inactive_te, feature.val.length) # O(1)
+```
+
+We can find the pointer to the element we want to modify in $O(1)$ and overwrite the tuple in $O(1)$ too. Then, its complexity is $O(1)$.
 
 In `src/simulate.py` you will find a program that can run simulations and tell you actual time it takes to simulate with different implementations. You can use it to test your analysis. You can modify the parameters to the simulator if you want to explore how they affect the running time.
