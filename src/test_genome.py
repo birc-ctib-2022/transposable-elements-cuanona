@@ -5,13 +5,12 @@
 # all files that start with test_*.py and run all functions with
 # names that start with test_
 
-from genome import (
-    Genome,
-    ListGenome,
-    LinkedListGenome
-)
+from LinkedGenome import LinkedListGenome
+from ListGenome import ListGenome
+from genome import Genome
 from typing import Type
 
+from simulate import sim_te, SimParams
 
 def run_genome_test(genome_class: Type[Genome]) -> None:
     """Test a Genome implementation."""
@@ -49,7 +48,6 @@ def run_genome_test(genome_class: Type[Genome]) -> None:
         "-----xxxxxAAAAAAAAAAxxxxx-----" \
         "xxxxxxxxxx-----xxxxxAAAAAAAAAAxxxxx-----"
     assert genome.active_tes() == [2, 5]
-
 
 def test_list_genome() -> None:
     """Test that the Python list implementation works."""

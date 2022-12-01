@@ -1,21 +1,25 @@
+from collections import namedtuple
+
+from genome import Genome
+
+
 """A circular genome for simulating transposable elements."""
 
-from abc import (
-    # A tag that says that we can't use this class except by specialising it
-    ABC,
-    # A tag that says that this method must be implemented by a child class
-    abstractmethod
-)
-from collections import namedtuple
-Feature = namedtuple("Feature", ["feature", "start", "end"])
+Interval = namedtuple("Interval", ["start", "end"])
 
-class Genome(ABC):
+def is_in_range(pos: int, interval: Interval):
+    return interval.start <= pos < interval.end
+
+class ListGenome(Genome):
     """Representation of a circular enome."""
-
+    genome: list[str]
+    active_identifiers: dict[int:Interval]
     def __init__(self, n: int):
         """Create a genome of size n."""
+        self.genome = n*['-']
+        self.active_identifiers = {}
+        self.te_counter = 0
 
-    @abstractmethod
     def insert_te(self, pos: int, length: int) -> int:
         """
         Insert a new transposable element.
@@ -29,8 +33,22 @@ class Genome(ABC):
 
         Returns a new ID for the transposable element.
         """
+        pos = pos % len(self)
+        active_identifiers = list(self.active_identifiers.items())
+        for identifier,active_te  in active_identifiers:
+            if is_in_range(pos, active_te):
+                start, end = active_te
+                self.genome[start:end] = (end - start)*["x"]
+                self.active_identifiers.pop(identifier)
+            if active_te.start > pos:
+                self.active_identifiers[identifier] = Interval(
+                    active_te.start + length, active_te.end + length
+                )
+        self.genome[pos:pos] = length*['A']
+        self.te_counter += 1
+        self.active_identifiers[self.te_counter] = Interval(pos, pos + length)
+        return self.te_counter
 
-    @abstractmethod
     def copy_te(self, te: int, offset: int) -> int | None:
         """
         Copy a transposable element.
@@ -45,8 +63,12 @@ class Genome(ABC):
 
         If te is not active, return None (and do not copy it).
         """
+        original: Interval = self.active_identifiers.get(te)
+        if original:
+            pos = (original.start + offset)
+            length = original.end - original.start
+            return self.insert_te(pos, length)
 
-    @abstractmethod
     def disable_te(self, te: int) -> None:
         """
         Disable a TE.
@@ -55,16 +77,18 @@ class Genome(ABC):
         TEs are already inactive, so there is no need to do anything
         for those.
         """
+        original: Interval = self.active_identifiers.pop(te)
+        if original:
+            self.genome[original.start:original.end] = (original.end - original.start)*["x"]
 
-    @abstractmethod
     def active_tes(self) -> list[int]:
         """Get the active TE IDs."""
+        return list(self.active_identifiers.keys())
 
-    @abstractmethod
     def __len__(self) -> int:
         """Get the current length of the genome."""
+        return len(self.genome)
 
-    @abstractmethod
     def __str__(self) -> str:
         """
         Return a string representation of the genome.
@@ -77,5 +101,6 @@ class Genome(ABC):
         represented with the character '-', active TEs with 'A', and disabled
         TEs with 'x'.
         """
+        return "".join(self.genome)
 
 
